@@ -2,7 +2,6 @@
 
 A deep learning project for automatic prostate gland segmentation in MRI scans using **U-Net** with multiple CNN backbones. Built with TensorFlow/Keras and the `segmentation_models` library.
 
-> **Authors:** Behnoud Shafiezadeh Kenari (ID: 5655740) · Erfan Fathi (ID: 5652154)
 
 ---
 
