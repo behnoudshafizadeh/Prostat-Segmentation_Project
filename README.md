@@ -202,43 +202,6 @@ pip install tensorflow segmentation-models nibabel opencv-python numpy scikit-le
 
 ---
 
-## 🐙 Git Setup (from scratch)
-
-If you're pushing this project to GitHub for the first time, run these commands inside the unzipped project folder:
-
-```bash
-# 1. Navigate into the project folder
-cd Prostat_Segmentation_Project
-
-# 2. Initialize git repository
-git init
-
-# 3. Add a .gitignore to skip large/unnecessary files
-echo "*.h5
-*.nii
-__pycache__/
-.vs/
-.ipynb_checkpoints/
-*.pyc" > .gitignore
-
-# 4. Stage all files
-git add .
-
-# 5. Make your first commit
-git commit -m "Initial commit: Prostate MRI Segmentation Project"
-
-# 6. Create repo on GitHub, then connect it
-git remote add origin https://github.com/<your-username>/Prostat_Segmentation_Project.git
-
-# 7. Push to GitHub
-git branch -M main
-git push -u origin main
-```
-
-> 💡 The `.nii` files are large — they are excluded from git via `.gitignore`. If you want to include them, consider using [Git LFS](https://git-lfs.com/).
-
----
-
 ## 📄 License
 
 This project was developed as part of a university course assignment.
