@@ -88,7 +88,7 @@ Prostat_Segmentation_Project/
 <img src="Prostat Data/img/prostat0-slice007_z.png" width="260"/>
 
 ### Corresponding Mask
-<img src="Prostat Data/mask/Groundtruth0-slice007_z.png" width="260"/>
+<img src="Prostat Data/mask/segmented0-slice007_z.png" width="260"/>
 
 These images show one original MRI slice and its corresponding segmentation mask from the dataset.
 
