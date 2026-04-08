@@ -1,206 +1,224 @@
 # 🫁 Prostate Segmentation from T2-Weighted MRI Images
 
-A deep learning project for automatic prostate gland segmentation in MRI scans using **U-Net** with multiple CNN backbones. Built with TensorFlow/Keras and the `segmentation_models` library.
+A deep learning project for **automatic prostate gland segmentation from T2-weighted MRI scans** using **U-Net with multiple pretrained CNN backbones**.
 
+This project includes:
+- MRI volume preprocessing from NIfTI to PNG slices
+- binary semantic segmentation masks
+- training with 13 different pretrained backbones
+- model comparison using IoU and Dice score
+- qualitative prediction visualization
+- training/validation performance charts
 
 ---
 
 ## 📋 Table of Contents
-
 - [Overview](#overview)
 - [Project Structure](#project-structure)
 - [Dataset](#dataset)
+- [Dataset Samples](#dataset-samples)
 - [Models & Backbones](#models--backbones)
 - [Pipeline](#pipeline)
 - [Results](#results)
+- [Training Procedure Example](#training-procedure-example)
 - [Getting Started](#getting-started)
 - [Requirements](#requirements)
 
 ---
 
-## Overview
+## 📖 Overview
 
-This project tackles **binary semantic segmentation** of the prostate gland from T2-weighted MRI volumes (NIfTI format). The pipeline covers:
+This project performs **binary semantic segmentation of the prostate gland** from **T2-weighted MRI volumes**.
 
-1. Loading and normalizing 3D MRI volumes
-2. Slicing volumes along the Z-axis into 2D PNG images
-3. Training a **U-Net** model with various pretrained CNN backbones
-4. Evaluating performance using **IoU Score** and **F-Score (Dice)**
-5. Comparing 13 different backbone architectures
+The workflow:
+1. Load 3D MRI NIfTI volumes
+2. Normalize intensities
+3. Convert Z-axis slices into 2D PNG images
+4. Train U-Net with multiple pretrained encoders
+5. Compare performance across different backbones
+6. Visualize segmentation outputs
 
 ---
 
 ## 📁 Project Structure
 
-```
+```text
 Prostat_Segmentation_Project/
 │
-├── Pre-processing and Visualization.ipynb      # Step 1: NIfTI → PNG slices
-├── Evaluation of different Segmentation Models.ipynb  # Step 2: Train & evaluate U-Net
+├── Pre-processing and Visualization.ipynb
+├── Evaluation of different Segmentation Models.ipynb
 │
 ├── Prostat Data/
-│   ├── img/          # 2D PNG slices of MRI images
-│   └── mask/         # 2D PNG slices of segmentation masks
+│   ├── img/
+│   └── mask/
 │
 ├── Different Models Training and Validation Procedure/
-│   ├── resnet50.png
 │   ├── densenet121.png
-│   ├── vgg16.png
-│   └── ...           # Training/validation curves for each backbone
+│   ├── resnet50.png
+│   └── ...
 │
 ├── output example/
-│   ├── prostat*      # Original MRI slices
-│   ├── Groundtruth*  # Ground truth masks
-│   └── predicted*    # Model predictions
+│   ├── prostat0-slice007_z.png
+│   ├── Groundtruth0-slice007_z.png
+│   ├── predicted0-slice007_z.png
+│   └── ...
 │
-├── Case02_RUNMC.nii              # Sample raw MRI volume
-├── Case02_segmentation_RUNMC.nii # Sample segmentation mask
-│
-├── Prostate segmentation from T2-weighted MRI-images_Requirements of Project.pdf
-├── Report of Project.pdf
-└── Report of Project_Results.pdf
+├── Case02_RUNMC.nii
+├── Case02_segmentation_RUNMC.nii
+└── README.md
 ```
 
 ---
 
 ## 🗃️ Dataset
 
-- **Format:** NIfTI (`.nii`) 3D MRI volumes → converted to 2D PNG slices
-- **Image size:** 384 × 384 pixels
-- **Cases:** 30 patients (Cases 00–29), from two centers: **BMC** and **RUNMC**
-- **Total slices:** ~1,500+ images with paired masks
-- **Mask values:** 0 (background), 1 (peripheral zone), 2 (transition zone) → binarized to 0/1
-- **Intensity range:** Normalized to [0, 1] using MinMaxScaler
+- **Input:** T2-weighted prostate MRI scans
+- **Format:** `.nii` → converted to `.png`
+- **Slice size:** 384 × 384
+- **Mask type:** binary segmentation
+- **Dataset structure:** paired `img/` and `mask/` folders
+- **Preprocessing:** MinMax normalization
+- **Output:** 2D slices along Z-axis
+
+---
+
+## 🖼️ Dataset Samples
+
+### MRI Slice Example
+<img src="Prostat Data/img/prostat0-slice007_z.png" width="260"/>
+
+### Corresponding Mask
+<img src="Prostat Data/mask/Groundtruth0-slice007_z.png" width="260"/>
+
+These images show one original MRI slice and its corresponding segmentation mask from the dataset.
 
 ---
 
 ## 🧠 Models & Backbones
 
-U-Net architecture tested with **13 different pretrained backbones**:
+The project benchmarks **U-Net** using **13 pretrained encoders**:
 
-| Family | Backbones |
-|---|---|
-| VGG | VGG16 |
-| ResNet | ResNet18, ResNet34, ResNet50 |
-| DenseNet | DenseNet121, DenseNet169, DenseNet201 |
-| EfficientNet | EfficientNetB0, B1, B2, B3 |
-| MobileNet | MobileNet, MobileNetV2 |
+### Tested backbones
+- VGG16
+- ResNet18
+- ResNet34
+- ResNet50
+- DenseNet121
+- DenseNet169
+- DenseNet201
+- EfficientNetB0
+- EfficientNetB1
+- EfficientNetB2
+- EfficientNetB3
+- MobileNet
+- MobileNetV2
 
 ---
 
 ## ⚙️ Pipeline
 
-### Step 1 — Pre-processing (`Pre-processing and Visualization.ipynb`)
+### 1) Preprocessing
+- Load NIfTI MRI volumes
+- normalize intensity
+- convert each slice into PNG
+- prepare paired image-mask dataset
 
-```python
-# Load NIfTI volume
-img = nib.load('Case02_RUNMC.nii').get_fdata()   # shape: (384, 384, 24)
+### 2) Model Training
+- U-Net + pretrained encoder
+- Binary Focal Loss + Dice Loss
+- IoU and Dice metrics
+- train/validation split
 
-# Normalize
-img = MinMaxScaler().fit_transform(img.reshape(-1, img.shape[-1])).reshape(img.shape)
-
-# Slice and save as PNG
-for i in range(dimz):
-    cv2.imwrite(f'prostat0-slice{i:03d}_z.png', np.uint8(img[:,:,i] * 255))
-```
-
-### Step 2 — Training (`Evaluation of different Segmentation Models.ipynb`)
-
-```python
-import segmentation_models as sm
-
-BACKBONE = 'resnet50'   # choose any backbone
-model = sm.Unet(BACKBONE, classes=1, activation='sigmoid')
-
-# Loss: Dice + Focal
-total_loss = sm.losses.DiceLoss() + sm.losses.BinaryFocalLoss()
-
-# Metrics
-metrics = [sm.metrics.IOUScore(threshold=0.5), sm.metrics.FScore(threshold=0.5)]
-
-model.compile(Adam(lr=0.0001), total_loss, metrics)
-model.fit(x_train, y_train, batch_size=4, epochs=20, validation_data=(x_val, y_val))
-```
+### 3) Evaluation
+- compare backbones
+- visualize predictions
+- inspect convergence curves
 
 ---
 
 ## 📊 Results
 
-Training and validation curves for all 13 backbones are saved in `Different Models Training and Validation Procedure/`. Example output comparisons (original / ground truth / prediction) are in `output example/`.
+### Output Prediction Example
 
-| Metric | Description |
-|---|---|
-| **IoU Score** | Intersection over Union (threshold = 0.5) |
-| **F-Score** | Dice coefficient (threshold = 0.5) |
-| **Loss** | Dice Loss + Binary Focal Loss |
+| Original MRI | Ground Truth | Predicted Mask |
+|---|---|---|
+| <img src="output example/prostat0-slice007_z.png" width="220"/> | <img src="output example/Groundtruth0-slice007_z.png" width="220"/> | <img src="output example/predicted0-slice007_z.png" width="220"/> |
+
+The prediction closely matches the annotated prostate region, showing strong segmentation quality.
+
+---
+
+## 📈 Training Procedure Example
+
+Example convergence curve using **DenseNet121 backbone**:
+
+<img src="Different Models Training and Validation Procedure/densenet121.png" width="750"/>
+
+This chart compares:
+- training IoU
+- validation IoU
+- training loss
+- validation loss
+
+to evaluate learning stability and generalization.
 
 ---
 
 ## 🚀 Getting Started
 
-### 1. Clone the repository
-
+### Clone the project
 ```bash
-git clone https://github.com/<your-username>/Prostat_Segmentation_Project.git
+git clone https://github.com/YOUR-USERNAME/Prostat_Segmentation_Project.git
 cd Prostat_Segmentation_Project
 ```
 
-### 2. Install dependencies
-
+### Install requirements
 ```bash
-pip install nibabel opencv-python scikit-learn segmentation-models tensorflow
+pip install tensorflow segmentation-models nibabel opencv-python numpy scikit-learn matplotlib
 ```
 
-### 3. Run Pre-processing
-
-Open and run all cells in:
-```
+### Run preprocessing
+Open:
+```bash
 Pre-processing and Visualization.ipynb
 ```
-> ⚠️ Update the data paths at the top of the notebook to match your local directory.
 
-### 4. Train a model
-
-Open and run:
-```
+### Run model training
+Open:
+```bash
 Evaluation of different Segmentation Models.ipynb
-```
-
-To switch backbone, change this line:
-```python
-BACKBONE = 'resnet50'   # options: vgg16, resnet18, densenet121, efficientnetb0, mobilenet, etc.
 ```
 
 ---
 
 ## 📦 Requirements
 
-```
-python >= 3.8
-tensorflow >= 2.x
-keras
-segmentation-models
-nibabel
-opencv-python
-numpy
-scikit-learn
-matplotlib
-```
+- Python 3.8+
+- TensorFlow / Keras
+- segmentation-models
+- nibabel
+- OpenCV
+- NumPy
+- scikit-learn
+- matplotlib
 
-Install all at once:
-```bash
-pip install tensorflow segmentation-models nibabel opencv-python numpy scikit-learn matplotlib
-```
+---
 
-> ⚠️ `segmentation-models` requires setting the framework before import:
-> ```python
-> import os
-> os.environ["SM_FRAMEWORK"] = "tf.keras"
-> import segmentation_models as sm
-> ```
+## 🎯 Key Skills Demonstrated
+
+- Medical image segmentation
+- MRI preprocessing
+- NIfTI handling
+- U-Net architecture
+- transfer learning
+- pretrained CNN encoders
+- IoU / Dice evaluation
+- qualitative visualization
+- deep learning experimentation
+- model benchmarking
 
 ---
 
 ## 📄 License
 
-This project was developed as part of a university course assignment.
+This project was developed as part of an academic medical imaging assignment.
